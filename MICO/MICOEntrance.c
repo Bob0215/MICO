@@ -260,7 +260,7 @@ void _ConnectToAP( mico_Context_t * const inContext)
   wNetConfig.wifi_retry_interval = 100;
   micoWlanStartAdv(&wNetConfig);
 }
-
+ 
 static void _watchdog_reload_timer_handler( void* arg )
 {
   (void)(arg);
@@ -301,6 +301,9 @@ int application_start(void)
 
   /*wlan driver and tcpip init*/
   MicoInit();
+#ifdef MICO_CLI_ENABLE  
+  MicoCliInit();
+#endif
   MicoSysLed(true);
   mico_log("Free memory %d bytes", MicoGetMemoryInfo()->free_memory) ; 
 
@@ -338,8 +341,15 @@ int application_start(void)
   err = MICOAddNotification( mico_notify_WIFI_STATUS_CHANGED, (void *)micoNotify_WifiStatusHandler );
   require_noerr( err, exit ); 
 
+#ifdef MFG_MODE_AUTO
   if( context->flashContentInRam.micoSystemConfig.configured == wLanUnConfigured ||
-      context->flashContentInRam.micoSystemConfig.configured == unConfigured){
+      context->flashContentInRam.micoSystemConfig.configured == unConfigured) 
+#else
+  if( context->flashContentInRam.micoSystemConfig.configured == wLanUnConfigured ||
+      context->flashContentInRam.micoSystemConfig.configured == unConfigured ||
+      context->flashContentInRam.micoSystemConfig.configured == mfgConfigured )
+#endif
+  {
     mico_log("Empty configuration. Starting configuration mode...");
 
 #if (MICO_CONFIG_MODE == CONFIG_MODE_EASYLINK) || (MICO_CONFIG_MODE == CONFIG_MODE_EASYLINK_WITH_SOFTAP)
